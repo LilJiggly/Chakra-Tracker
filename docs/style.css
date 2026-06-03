@@ -1,23 +1,52 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+/* ═══════════════════════════════════════════════════
+   DESIGN TOKENS — change these to restyle everything
+═══════════════════════════════════════════════════ */
 :root {
-  --bg:      #18181f;
-  --panel:   #1f1f28;
-  --card:    #26262f;
-  --card-2:  #2e2e3a;
-  --border:  rgba(255,255,255,0.07);
-  --text:    #eeeaf8;
-  --muted:   #7a7a99;
-  --radius:  14px;
-  --gap:     12px;
+  /* Backgrounds */
+  --bg:        #0f0f13;
+  --surface:   #1a1a22;
+  --surface-2: #22222c;
+  --surface-3: #2a2a36;
+
+  /* Aliases (keep old names working) */
+  --panel:     var(--surface);
+  --card:      var(--surface);
+  --card-2:    var(--surface-2);
+
+  /* Borders */
+  --border:    rgba(255,255,255,0.07);
+
+  /* Text */
+  --text:      #f0eef8;
+  --muted:     #6e6e8a;
+
+  /* Accent */
+  --accent:    #7c5cfc;
+
+  /* Shape */
+  --radius:    14px;
+  --radius-sm: 8px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+
+  /* Spacing */
+  --gap:       12px;
+
+  /* Font */
+  --font:      'Inter', -apple-system, sans-serif;
+  --font-size: 15px;
 }
 
 body {
   background: var(--bg);
   color: var(--text);
-  font-family: 'Inter', -apple-system, sans-serif;
+  font-family: var(--font);
+  font-size: var(--font-size);
   min-height: 100vh;
   overflow-x: hidden;
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
 /* ─── INTRO ─── */
@@ -464,11 +493,15 @@ body {
   letter-spacing: 0.3px;
 }
 
-/* ─── MODAL ─── */
+/* ─── BODY LOCK (prevents background scroll when modal open) ─── */
+body.modal-open { overflow: hidden; }
+
+/* ─── MODAL — Desktop: centered overlay ─── */
 .modal-overlay {
   display: none;
   position: fixed; inset: 0;
   background: rgba(0,0,0,0.72);
+  backdrop-filter: blur(4px);
   z-index: 100;
   align-items: flex-start;
   justify-content: center;
@@ -478,28 +511,66 @@ body {
 .modal-overlay.open { display: flex; }
 
 .modal {
-  background: var(--panel);
+  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 18px;
-  padding: 26px;
+  padding: 0;
   width: 100%;
-  max-width: 856px;
+  max-width: 560px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
   margin: auto;
   position: relative;
   box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+  overflow: hidden;
 }
 
-.modal-close {
-  position: absolute; top: 14px; right: 14px;
-  background: var(--card-2); border: none;
-  color: var(--muted); width: 28px; height: 28px;
-  border-radius: 50%; cursor: pointer; font-size: 0.7rem;
-  transition: background .15s; font-family: inherit;
+/* Sticky modal nav bar (desktop) */
+.modal-navbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 2;
+  background: var(--surface);
 }
-.modal-close:hover { background: var(--card); color: var(--text); }
+
+.modal-back {
+  width: 32px; height: 32px;
+  border-radius: 50%; border: none;
+  background: var(--surface-2);
+  color: var(--muted); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem; flex-shrink: 0;
+  transition: background .15s;
+  font-family: inherit;
+}
+.modal-back:hover { background: var(--surface-3); color: var(--text); }
+
+.modal-navbar-info { flex: 1; min-width: 0; }
+.modal-navbar-info h3 { font-size: 0.95rem; font-weight: 700; }
+.modal-navbar-sub     { font-size: 0.72rem; color: var(--muted); margin-top: 1px; }
+
+.modal-navbar-badge {
+  font-size: 0.65rem; font-weight: 700;
+  padding: 3px 9px; border-radius: 99px;
+  text-transform: uppercase; letter-spacing: 0.05em;
+  background: var(--surface-2);
+  white-space: nowrap;
+}
+
+/* Scrollable modal content */
+.modal-body {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  max-height: 82vh;
+  padding-bottom: calc(20px + env(safe-area-inset-bottom));
+}
 
 .modal-header { display: flex; align-items: center; gap: 14px; }
 
@@ -512,6 +583,9 @@ body {
 .modal-header h3   { font-size: 1.2rem; font-weight: 700; }
 .modal-sanskrit    { font-size: 0.78rem; color: var(--muted); font-style: italic; display: block; margin-top: 2px; }
 .modal-element     { font-size: 0.72rem; color: var(--muted); display: block; margin-top: 2px; }
+
+/* Legacy close button — hidden, replaced by back button */
+.modal-close { display: none; }
 
 .modal-streak-badge {
   font-size: 1.1rem;
@@ -1125,14 +1199,10 @@ body {
   .app-body {
     grid-template-columns: 1fr;
     padding: 10px;
+    padding-bottom: calc(10px + env(safe-area-inset-bottom));
   }
-  .topbar-inner {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-  }
-  .modal-overlay { padding: 0; border: none; border-radius: 0; }
-  .topbar-score { margin:0;}
+  .topbar-inner { flex-wrap: wrap; justify-content: space-between; }
+  .topbar-score { margin: 0; }
   .topbar-score-text { display: none; }
   .topbar-right .subtitle { display: none; }
   .panel-left  { order: 1; }
@@ -1140,4 +1210,35 @@ body {
   .svg-wrap    { max-width: 180px; }
   .modal-signs { grid-template-columns: 1fr; }
   .intro-title { font-size: 1.8rem; }
+
+  /* ── Full-screen modal on mobile ── */
+  .modal-overlay {
+    padding: 0;
+    background: transparent;
+    backdrop-filter: none;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  .modal-overlay.open { pointer-events: all; }
+
+  .modal {
+    position: fixed;
+    inset: 0;
+    max-width: 100%;
+    border-radius: 0;
+    border: none;
+    margin: 0;
+    transform: translateX(100%);
+    transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+    max-height: 100%;
+  }
+
+  .modal-overlay.open .modal {
+    transform: translateX(0);
+  }
+
+  .modal-body {
+    max-height: calc(100vh - 60px);
+    padding-bottom: calc(24px + env(safe-area-inset-bottom));
+  }
 }

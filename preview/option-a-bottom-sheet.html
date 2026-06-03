@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Option A — Bottom Sheet</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    /* ═══════════════════════════════════════════
+       DESIGN TOKENS — edit these to restyle everything
+    ═══════════════════════════════════════════ */
+    :root {
+      /* Colors */
+      --bg:          #0f0f13;
+      --surface:     #1a1a22;
+      --surface-2:   #22222c;
+      --surface-3:   #2a2a36;
+      --border:      rgba(255,255,255,0.07);
+      --text:        #f0eef8;
+      --text-muted:  #6e6e8a;
+      --text-subtle: #4a4a62;
+      --accent:      #7c5cfc;
+
+      /* Chakra colors */
+      --root:        #ef4444;
+      --sacral:      #f97316;
+      --solar:       #eab308;
+      --heart:       #22c55e;
+      --throat:      #38bdf8;
+      --third-eye:   #6366f1;
+      --crown:       #d946ef;
+
+      /* Shape */
+      --radius-sm:   8px;
+      --radius-md:   14px;
+      --radius-lg:   20px;
+      --radius-xl:   28px;
+
+      /* Spacing */
+      --gap:         12px;
+      --gap-lg:      20px;
+
+      /* Typography */
+      --font:        'Inter', -apple-system, sans-serif;
+      --font-size:   15px;
+
+      /* Shadows */
+      --shadow-sm:   0 1px 3px rgba(0,0,0,0.3);
+      --shadow-md:   0 4px 16px rgba(0,0,0,0.4);
+      --shadow-lg:   0 8px 40px rgba(0,0,0,0.6);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: var(--font-size);
+      min-height: 100vh;
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    body.modal-open { overflow: hidden; }
+
+    /* ── TOP BAR ── */
+    .topbar {
+      position: sticky; top: 0; z-index: 40;
+      background: rgba(15,15,19,0.9);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 20px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+
+    .topbar-title {
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+
+    .topbar-subtitle {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      margin-top: 1px;
+    }
+
+    .topbar-right { display: flex; align-items: center; gap: 10px; }
+
+    .avatar {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: var(--accent);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.75rem; font-weight: 700; color: #fff;
+    }
+
+    /* ── CHAKRA LIST ── */
+    .list {
+      padding: var(--gap);
+      display: flex; flex-direction: column; gap: 8px;
+      max-width: 520px; margin: 0 auto;
+    }
+
+    .section-label {
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-subtle);
+      padding: 8px 4px 4px;
+    }
+
+    .row {
+      background: var(--surface);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border);
+      padding: 14px;
+      display: flex; align-items: center; gap: 13px;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .row:active { transform: scale(0.985); background: var(--surface-2); }
+
+    .row.locked { opacity: 0.4; cursor: default; }
+
+    .dot {
+      width: 44px; height: 44px;
+      border-radius: 12px;
+      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    .dot svg { width: 20px; height: 20px; }
+
+    .row-info { flex: 1; min-width: 0; }
+
+    .row-name { font-size: 0.95rem; font-weight: 600; letter-spacing: -0.01em; }
+    .row-sub  { font-size: 0.72rem; color: var(--text-muted); margin-top: 2px; }
+
+    .bar-wrap {
+      background: var(--surface-3);
+      border-radius: 99px; height: 4px; overflow: hidden;
+      margin-top: 8px;
+    }
+    .bar { height: 100%; border-radius: 99px; transition: width 0.5s ease; }
+
+    .row-right {
+      text-align: right; flex-shrink: 0;
+      display: flex; flex-direction: column; align-items: flex-end; gap: 4px;
+    }
+
+    .row-pct   { font-size: 0.92rem; font-weight: 700; }
+    .row-level {
+      font-size: 0.62rem; font-weight: 600;
+      padding: 2px 7px; border-radius: 99px;
+      background: var(--surface-3);
+      text-transform: uppercase; letter-spacing: 0.05em;
+      white-space: nowrap;
+    }
+    .row-streak { font-size: 0.72rem; color: var(--text-muted); }
+
+    /* ── BOTTOM SHEET MODAL ── */
+    .sheet-overlay {
+      display: none;
+      position: fixed; inset: 0; z-index: 100;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(4px);
+    }
+    .sheet-overlay.open { display: block; }
+
+    .sheet {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      z-index: 101;
+      background: var(--surface);
+      border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+      padding: 0 0 env(safe-area-inset-bottom);
+      max-height: 92vh;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      transform: translateY(100%);
+      transition: transform 0.38s cubic-bezier(0.32, 0.72, 0, 1);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .sheet.open { transform: translateY(0); }
+
+    .sheet-handle {
+      width: 36px; height: 4px;
+      background: var(--border);
+      border-radius: 99px;
+      margin: 12px auto 0;
+    }
+
+    .sheet-header {
+      display: flex; align-items: center; gap: 14px;
+      padding: 16px 20px 0;
+    }
+
+    .sheet-swatch {
+      width: 48px; height: 48px;
+      border-radius: 14px; flex-shrink: 0;
+    }
+
+    .sheet-header-text h2 { font-size: 1.15rem; font-weight: 700; letter-spacing: -0.02em; }
+    .sheet-sanskrit { font-size: 0.78rem; color: var(--text-muted); font-style: italic; }
+    .sheet-element  { font-size: 0.72rem; color: var(--text-muted); margin-top: 2px; display: block; }
+
+    .sheet-close {
+      margin-left: auto;
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      border: none; background: var(--surface-3);
+      color: var(--text-muted); cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.8rem; flex-shrink: 0;
+    }
+
+    .sheet-body { padding: 16px 20px 24px; display: flex; flex-direction: column; gap: 16px; }
+
+    /* Affirmation */
+    .affirmation {
+      background: var(--surface-2);
+      border-left: 3px solid;
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      font-size: 0.85rem;
+      font-style: italic;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    /* XP bar */
+    .xp-section { display: flex; flex-direction: column; gap: 8px; }
+    .xp-row { display: flex; align-items: center; justify-content: space-between; }
+    .xp-level {
+      font-size: 0.7rem; font-weight: 700;
+      padding: 3px 10px; border-radius: 99px;
+      text-transform: uppercase; letter-spacing: 0.05em;
+      background: var(--surface-3);
+    }
+    .xp-name  { font-size: 0.8rem; color: var(--text-muted); }
+    .xp-pct   { font-size: 1.2rem; font-weight: 700; }
+
+    .xp-bar-wrap {
+      position: relative;
+      background: var(--surface-3);
+      border-radius: 99px; height: 8px; overflow: hidden;
+    }
+    .xp-bar-fill  { height: 100%; border-radius: 99px; }
+    .xp-bar-today {
+      position: absolute; top: 0; height: 100%;
+      background: rgba(255,255,255,0.25); border-radius: 99px;
+    }
+
+    .xp-milestones {
+      display: flex; justify-content: space-between;
+      font-size: 0.62rem; color: var(--text-subtle);
+    }
+
+    /* Exercises */
+    .exercises-label {
+      font-size: 0.68rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.08em;
+      color: var(--text-subtle);
+    }
+
+    .exercise {
+      background: var(--surface-2);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border);
+      padding: 14px;
+      display: flex; gap: 12px;
+      cursor: pointer;
+      transition: background 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .exercise:active { background: var(--surface-3); }
+    .exercise.done   { opacity: 0.6; }
+
+    .ex-check {
+      width: 26px; height: 26px; border-radius: 50%;
+      border: 2px solid var(--border);
+      flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+      font-size: 0.75rem; margin-top: 1px;
+      transition: all 0.2s;
+    }
+    .exercise.done .ex-check { border-color: transparent; color: #fff; }
+
+    .ex-name { font-size: 0.9rem; font-weight: 600; margin-bottom: 4px; }
+    .ex-how  { font-size: 0.78rem; color: var(--text-muted); line-height: 1.55; }
+    .ex-xp   { font-size: 0.7rem; margin-top: 6px; font-weight: 600; opacity: 0.7; }
+
+    .ex-timer {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: 0.68rem; font-weight: 600;
+      padding: 3px 9px; border-radius: 99px;
+      border: 1px solid var(--border);
+      background: var(--surface-3);
+      color: var(--text-muted); margin-top: 6px;
+      cursor: pointer;
+    }
+
+    /* Demo button */
+    .demo-btn {
+      background: var(--accent);
+      color: #fff; border: none;
+      padding: 14px; border-radius: var(--radius-md);
+      font-size: 0.9rem; font-weight: 600;
+      cursor: pointer; font-family: var(--font);
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="topbar">
+    <div>
+      <div class="topbar-title">Chakra Tracker</div>
+      <div class="topbar-subtitle">Synced 2 minutes ago</div>
+    </div>
+    <div class="topbar-right">
+      <div class="avatar">S</div>
+    </div>
+  </div>
+
+  <div class="list">
+    <div class="section-label">Active</div>
+
+    <!-- Root -->
+    <div class="row" onclick="openSheet()">
+      <div class="dot" style="background:#ef444422">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3" fill="#ef4444"/></svg>
+      </div>
+      <div class="row-info">
+        <div class="row-name">Root</div>
+        <div class="row-sub">Muladhara · Earth / Security</div>
+        <div class="bar-wrap"><div class="bar" style="width:8%;background:#ef4444"></div></div>
+      </div>
+      <div class="row-right">
+        <span class="row-pct" style="color:#ef4444">8%</span>
+        <span class="row-level">Dormant</span>
+      </div>
+    </div>
+
+    <!-- Sacral — locked -->
+    <div class="row locked">
+      <div class="dot" style="background:#f9731622">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3" fill="#f97316"/></svg>
+      </div>
+      <div class="row-info">
+        <div class="row-name">Sacral</div>
+        <div class="row-sub" style="color:#ef4444;font-size:.7rem">🔒 Reach Awakening in Root</div>
+      </div>
+      <div class="row-right"><span style="font-size:1rem">🔒</span></div>
+    </div>
+
+    <div class="section-label" style="margin-top:8px">Tap a chakra to open</div>
+    <button class="demo-btn" onclick="openSheet()">↑ Tap Root to open modal</button>
+  </div>
+
+  <!-- Bottom Sheet Overlay -->
+  <div class="sheet-overlay" id="overlay" onclick="closeSheet()"></div>
+
+  <!-- Bottom Sheet -->
+  <div class="sheet" id="sheet">
+    <div class="sheet-handle"></div>
+
+    <div class="sheet-header">
+      <div class="sheet-swatch" style="background:#ef4444;box-shadow:0 4px 16px #ef444455"></div>
+      <div class="sheet-header-text">
+        <h2>Root Chakra</h2>
+        <span class="sheet-sanskrit">Muladhara</span>
+        <span class="sheet-element">✦ Earth / Security</span>
+      </div>
+      <button class="sheet-close" onclick="closeSheet()">✕</button>
+    </div>
+
+    <div class="sheet-body">
+
+      <!-- Affirmation -->
+      <div class="affirmation" style="border-color:#ef4444">
+        "I am safe. I am grounded. I belong here."
+      </div>
+
+      <!-- XP -->
+      <div class="xp-section">
+        <div class="xp-row">
+          <span class="xp-level" style="color:#ef4444">Level 1</span>
+          <span class="xp-name">Dormant</span>
+          <span class="xp-pct">8%</span>
+        </div>
+        <div class="xp-bar-wrap">
+          <div class="xp-bar-fill" style="width:8%;background:#ef4444"></div>
+          <div class="xp-bar-today" style="left:0%;width:8%"></div>
+        </div>
+        <div class="xp-milestones">
+          <span>0%</span><span>L2</span><span>L3</span><span>L4</span><span>L5</span><span>100%</span>
+        </div>
+      </div>
+
+      <!-- Exercises -->
+      <div class="exercises-label">Today's Practice — Wed, Jun 4</div>
+
+      <div class="exercise done">
+        <div class="ex-check" style="background:#ef4444">✓</div>
+        <div>
+          <div class="ex-name">Mountain Pose Grounding</div>
+          <div class="ex-how">Stand barefoot on natural ground. Press all four corners of each foot down. Close your eyes and imagine roots growing from your feet.</div>
+          <div class="ex-timer">⏱ 3:00</div>
+          <div class="ex-xp" style="color:#ef4444">✓ Done today (click to undo)</div>
+        </div>
+      </div>
+
+      <div class="exercise" onclick="this.classList.add('done')">
+        <div class="ex-check"></div>
+        <div>
+          <div class="ex-name">Malasana (Garland Pose)</div>
+          <div class="ex-how">Sink into a deep squat, feet wider than hips. Hold hands to prayer at chest, elbows pressing knees open. Stay 1–3 minutes breathing steadily.</div>
+          <div class="ex-timer">⏱ 1:00</div>
+          <div class="ex-xp" style="color:#ef4444">+4% XP</div>
+        </div>
+      </div>
+
+      <div class="exercise" onclick="this.classList.add('done')">
+        <div class="ex-check"></div>
+        <div>
+          <div class="ex-name">Red Drawing — Earth & Body</div>
+          <div class="ex-how">Using only reds, draw your body from the waist down or any earthy image. Press firmly, use the full side of a crayon or pastel.</div>
+          <div class="ex-xp" style="color:#ef4444">+4% XP · 🎨 Art · +3% bonus for all three</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    function openSheet() {
+      document.getElementById('overlay').classList.add('open');
+      document.getElementById('sheet').classList.add('open');
+      document.body.classList.add('modal-open');
+    }
+    function closeSheet() {
+      document.getElementById('overlay').classList.remove('open');
+      document.getElementById('sheet').classList.remove('open');
+      document.body.classList.remove('modal-open');
+    }
+  </script>
+</body>
+</html>

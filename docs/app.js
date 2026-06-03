@@ -410,6 +410,7 @@ function openModal(id) {
   editingId = id;
   renderModal();
   overlay.classList.add('open');
+  document.body.classList.add('modal-open');
 }
 
 function renderModal() {
@@ -423,6 +424,8 @@ function renderModal() {
   const nextLvl = lvl.level < 5 ? LEVELS[lvl.level] : null;
 
   document.getElementById('modal-title').textContent     = `${c.name} Chakra`;
+  document.getElementById('modal-title-2').textContent   = `${c.name} Chakra`;
+  document.getElementById('modal-navbar-sub').textContent = `${c.sanskrit}${ch.streak > 0 ? ' · ' + streakLabel(ch.streak) : ''}`;
   document.getElementById('modal-sanskrit').textContent  = c.sanskrit;
   document.getElementById('modal-element').textContent   = `✦ ${c.element}`;
   document.getElementById('modal-swatch').style.background = c.color;
@@ -436,7 +439,7 @@ function renderModal() {
   document.getElementById('modal-level-badge').textContent = `Level ${lvl.level}`;
   document.getElementById('modal-level-badge').style.color = c.color;
   document.getElementById('modal-level-name').textContent  = lvl.name;
-  document.getElementById('modal-pct').textContent         = `${pct}%`;
+  document.getElementById('modal-pct').textContent         = `${pct}% towards next Level`;
 
   const xpBar  = document.getElementById('modal-xp-bar');
   const xpGain = document.getElementById('modal-xp-bar-gain');
@@ -610,10 +613,12 @@ function showLevelUpToast(c, newLevel) {
 // ── Modal close ──────────────────────────────────────────────
 function closeModal() {
   overlay.classList.remove('open');
+  document.body.classList.remove('modal-open');
   activeTimers.forEach(iv => clearInterval(iv));
   activeTimers.clear();
 }
 document.getElementById('modal-close').addEventListener('click', closeModal);
+// Click overlay background to close (desktop only — mobile has no visible overlay)
 overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
 
 // ── SVG clicks ───────────────────────────────────────────────

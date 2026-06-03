@@ -241,71 +241,82 @@
   <!-- ── DETAIL MODAL ── -->
   <div class="modal-overlay" id="modal-overlay">
     <div class="modal">
-      <button class="modal-close" id="modal-close">✕</button>
 
-      <!-- Header -->
-      <div class="modal-header">
-        <div class="modal-swatch" id="modal-swatch"></div>
-        <div class="modal-header-text">
+      <!-- Sticky navbar (back button + chakra name) -->
+      <div class="modal-navbar">
+        <button class="modal-back" id="modal-close">←</button>
+        <div class="modal-navbar-info">
           <h3 id="modal-title"></h3>
-          <span class="modal-sanskrit" id="modal-sanskrit"></span>
-          <span class="modal-element"  id="modal-element"></span>
+          <div class="modal-navbar-sub" id="modal-navbar-sub"></div>
         </div>
-        <div class="modal-streak-badge" id="modal-streak-badge"></div>
+        <span class="modal-navbar-badge" id="modal-level-badge"></span>
       </div>
 
-      <!-- Level + progress -->
-      <div class="modal-level-section">
-        <div class="modal-level-row">
-          <span class="level-badge lg" id="modal-level-badge"></span>
-          <span class="modal-level-name" id="modal-level-name"></span>
-          <span class="modal-pct" id="modal-pct"></span>
-        </div>
-        <div class="xp-bar-wrap">
-          <div class="xp-bar" id="modal-xp-bar"></div>
-          <div class="xp-bar-gain" id="modal-xp-bar-gain"></div>
-          <!-- tick marks at each level boundary -->
-          <div class="xp-tick" style="left:20%"></div>
-          <div class="xp-tick" style="left:40%"></div>
-          <div class="xp-tick" style="left:60%"></div>
-          <div class="xp-tick" style="left:80%"></div>
-        </div>
-        <div class="xp-milestones">
-          <span>0%</span>
-          <span style="left:20%">L2</span>
-          <span style="left:40%">L3</span>
-          <span style="left:60%">L4</span>
-          <span style="left:80%">L5</span>
-          <span>100%</span>
-        </div>
-        <div class="xp-today-row" id="xp-today-earned"></div>
-      </div>
+      <!-- Scrollable content -->
+      <div class="modal-body">
 
-      <!-- Affirmation -->
-      <div class="affirmation-card" id="modal-affirmation"></div>
-
-      <!-- Today's exercises -->
-      <div class="exercises-section">
-        <div class="exercises-header">
-          <h4>Today's Practice</h4>
-          <span class="today-date" id="today-date"></span>
+        <!-- Header (swatch + sanskrit + element) -->
+        <div class="modal-header">
+          <div class="modal-swatch" id="modal-swatch"></div>
+          <div class="modal-header-text">
+            <h3 id="modal-title-2"></h3>
+            <span class="modal-sanskrit" id="modal-sanskrit"></span>
+            <span class="modal-element"  id="modal-element"></span>
+          </div>
+          <div class="modal-streak-badge" id="modal-streak-badge"></div>
         </div>
-        <div id="exercises-list" class="exercises-list"></div>
-        <div class="all-done-banner" id="all-done-banner" style="display:none">
-          <span>✦ All exercises complete for today!</span>
-        </div>
-      </div>
 
-      <!-- About (collapsed) -->
-      <details class="about-section">
-        <summary>About this chakra</summary>
-        <p class="modal-summary" id="modal-summary"></p>
-        <div class="modal-signs">
-          <div class="sign blocked"><strong>When blocked</strong><p id="sign-blocked"></p></div>
-          <div class="sign open"><strong>When open</strong><p id="sign-open"></p></div>
-        </div>
-      </details>
+        <!-- Affirmation -->
+        <div class="affirmation-card" id="modal-affirmation"></div>
 
+        <!-- Level + progress -->
+        <div class="modal-level-section">
+          <div class="modal-level-row">
+            <span class="modal-level-name" id="modal-level-name"></span>
+            <span class="modal-pct" id="modal-pct"></span>
+          </div>
+          <div class="xp-bar-wrap">
+            <div class="xp-bar" id="modal-xp-bar"></div>
+            <div class="xp-bar-gain" id="modal-xp-bar-gain"></div>
+            <div class="xp-tick" style="left:20%"></div>
+            <div class="xp-tick" style="left:40%"></div>
+            <div class="xp-tick" style="left:60%"></div>
+            <div class="xp-tick" style="left:80%"></div>
+          </div>
+          <div class="xp-milestones">
+            <span>0%</span>
+            <span style="left:20%">L2</span>
+            <span style="left:40%">L3</span>
+            <span style="left:60%">L4</span>
+            <span style="left:80%">L5</span>
+            <span>100%</span>
+          </div>
+          <div class="xp-today-row" id="xp-today-earned"></div>
+        </div>
+
+        <!-- Today's exercises -->
+        <div class="exercises-section">
+          <div class="exercises-header">
+            <h4>Today's Practice</h4>
+            <span class="today-date" id="today-date"></span>
+          </div>
+          <div id="exercises-list" class="exercises-list"></div>
+          <div class="all-done-banner" id="all-done-banner" style="display:none">
+            <span>✦ All exercises complete for today!</span>
+          </div>
+        </div>
+
+        <!-- About (collapsed) -->
+        <details class="about-section">
+          <summary>About this chakra</summary>
+          <p class="modal-summary" id="modal-summary"></p>
+          <div class="modal-signs">
+            <div class="sign blocked"><strong>When blocked</strong><p id="sign-blocked"></p></div>
+            <div class="sign open"><strong>When open</strong><p id="sign-open"></p></div>
+          </div>
+        </details>
+
+      </div><!-- end modal-body -->
     </div>
   </div>
 
