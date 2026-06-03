@@ -35,25 +35,27 @@ if (!isConfigured) {
   let   unsubscribeSnapshot = null;
 
   function startListening(uid) {
-    // Stop any previous listener
     if (unsubscribeSnapshot) unsubscribeSnapshot();
+    console.log('[Firebase] Starting Firestore listener for uid:', uid);
 
     unsubscribeSnapshot = onSnapshot(
       doc(db, 'users', uid, 'data', 'state'),
       snap => {
+        console.log('[Firebase] Snapshot received — exists:', snap.exists(), '— data keys:', snap.exists() ? Object.keys(snap.data()) : 'none');
         if (snap.exists()) {
-          // Fire event so app.js can update state + re-render
           window.dispatchEvent(new CustomEvent('firebase-data-updated', {
             detail: { data: snap.data() }
           }));
         }
       },
-      err => console.warn('Firestore listener error:', err)
+      err => console.error('[Firebase] Listener error:', err)
     );
   }
 
   async function saveData(uid, data) {
+    console.log('[Firebase] Saving to Firestore...');
     await setDoc(doc(db, 'users', uid, 'data', 'state'), data);
+    console.log('[Firebase] Saved OK');
   }
 
   window._fb = {
