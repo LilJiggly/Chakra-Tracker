@@ -6,8 +6,8 @@ import { initializeApp }                          from 'https://www.gstatic.com/
 import { getAuth, GoogleAuthProvider,
          signInWithPopup, signOut as fbSignOut,
          onAuthStateChanged }                     from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-import { getFirestore, doc,
-         getDoc, setDoc }                         from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+import { getFirestore, doc, setDoc,
+         onSnapshot }                             from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
 // Try window global first (set by CI/CD), then fall back to local file
 let firebaseConfig = window._firebaseConfig;
@@ -32,25 +32,44 @@ if (!isConfigured) {
   const auth     = getAuth(app);
   const db       = getFirestore(app);
   const provider = new GoogleAuthProvider();
+  let   unsubscribeSnapshot = null;
+
+  function startListening(uid) {
+    // Stop any previous listener
+    if (unsubscribeSnapshot) unsubscribeSnapshot();
+
+    unsubscribeSnapshot = onSnapshot(
+      doc(db, 'users', uid, 'data', 'state'),
+      snap => {
+        if (snap.exists()) {
+          // Fire event so app.js can update state + re-render
+          window.dispatchEvent(new CustomEvent('firebase-data-updated', {
+            detail: { data: snap.data() }
+          }));
+        }
+      },
+      err => console.warn('Firestore listener error:', err)
+    );
+  }
 
   async function saveData(uid, data) {
     await setDoc(doc(db, 'users', uid, 'data', 'state'), data);
   }
 
-  async function loadData(uid) {
-    const snap = await getDoc(doc(db, 'users', uid, 'data', 'state'));
-    return snap.exists() ? snap.data() : null;
-  }
-
   window._fb = {
-    signIn:   () => signInWithPopup(auth, provider),
-    signOut:  () => fbSignOut(auth),
+    signIn:         () => signInWithPopup(auth, provider),
+    signOut:        () => fbSignOut(auth),
     saveData,
-    loadData,
-    get user() { return auth.currentUser; },
+    startListening,
+    get user()      { return auth.currentUser; },
   };
 
   onAuthStateChanged(auth, user => {
+    if (user) {
+      startListening(user.uid);
+    } else {
+      if (unsubscribeSnapshot) { unsubscribeSnapshot(); unsubscribeSnapshot = null; }
+    }
     window.dispatchEvent(new CustomEvent('firebase-auth-changed', { detail: { user } }));
   });
 }

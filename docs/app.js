@@ -122,25 +122,38 @@ function save() {
 }
 
 // ── Firebase auth integration ─────────────────────────────────
-window.addEventListener('firebase-auth-changed', async e => {
-  const user = e.detail.user;
-  updateAuthUI(user);
-  if (user) {
-    // Load cloud data, merge with local (cloud wins if newer)
-    try {
-      const cloud = await window._fb.loadData(user.uid);
-      if (cloud && Object.keys(cloud).length) {
-        state = cloud;
-        localStorage.setItem('chakra-v3', JSON.stringify(state));
-      } else {
-        // First login — push local data to cloud
-        await window._fb.saveData(user.uid, state);
-      }
-    } catch(err) { console.warn('Firestore load failed:', err); }
+window.addEventListener('firebase-auth-changed', e => {
+  updateAuthUI(e.detail.user);
+  // Real-time listener handles data loading (firebase.js calls startListening)
+  // If signing out, clear to localStorage state
+  if (!e.detail.user) {
+    load();
     renderList();
     updateScoreRing();
-    if (activeTab === 'calendar') renderCalendar();
-    if (activeTab === 'progress') renderCharts();
+  }
+});
+
+// Real-time sync — fires whenever Firestore data changes on ANY device
+window.addEventListener('firebase-data-updated', e => {
+  const incoming = e.detail.data;
+  if (!incoming || !Object.keys(incoming).length) {
+    // Nothing in cloud yet — push local data up
+    if (window._fb?.user) {
+      window._fb.saveData(window._fb.user.uid, state).catch(console.warn);
+    }
+    return;
+  }
+  state = incoming;
+  localStorage.setItem('chakra-v3', JSON.stringify(state));
+  document.getElementById('last-updated').textContent =
+    'Synced ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  renderList();
+  updateScoreRing();
+  if (activeTab === 'calendar') renderCalendar();
+  if (activeTab === 'progress') renderCharts();
+  // If modal is open, refresh it too
+  if (document.getElementById('modal-overlay').classList.contains('open')) {
+    renderModal();
   }
 });
 

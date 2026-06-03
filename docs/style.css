@@ -1126,6 +1126,12 @@ body {
     grid-template-columns: 1fr;
     padding: 10px;
   }
+  .topbar-inner {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+  }
+  .topbar-score { margin:0;}
   .topbar-score-text { display: none; }
   .topbar-right .subtitle { display: none; }
   .panel-left  { order: 1; }
