@@ -125,6 +125,7 @@ function save() {
 async function pullFromFirestore() {
   if (!window._fb?.user) return;
   try {
+    await window._fb.reconnect(); // force Firestore back online if it drifted offline
     const cloud = await window._fb.loadData(window._fb.user.uid);
     if (cloud && Object.keys(cloud).length) {
       state = cloud;
@@ -145,7 +146,7 @@ document.addEventListener('visibilitychange', () => {
 // Re-sync when network comes back online
 window.addEventListener('online', () => pullFromFirestore());
 
-// Poll every 10 seconds as fallback when WebSocket drops
+// Poll every 10 seconds — also forces Firestore back online if it dropped
 setInterval(() => {
   if (document.visibilityState === 'visible') pullFromFirestore();
 }, 10000);
