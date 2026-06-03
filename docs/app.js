@@ -145,6 +145,11 @@ document.addEventListener('visibilitychange', () => {
 // Re-sync when network comes back online
 window.addEventListener('online', () => pullFromFirestore());
 
+// Poll every 10 seconds as fallback when WebSocket drops
+setInterval(() => {
+  if (document.visibilityState === 'visible') pullFromFirestore();
+}, 10000);
+
 // ── Cross-tab sync (same browser, instant via localStorage event) ──
 window.addEventListener('storage', e => {
   if (e.key !== 'chakra-v3' || !e.newValue) return;

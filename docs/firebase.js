@@ -36,12 +36,9 @@ if (!isConfigured) {
 
   function startListening(uid) {
     if (unsubscribeSnapshot) unsubscribeSnapshot();
-    console.log('[Firebase] Starting Firestore listener for uid:', uid);
-
     unsubscribeSnapshot = onSnapshot(
       doc(db, 'users', uid, 'data', 'state'),
       snap => {
-        console.log('[Firebase] Snapshot received — exists:', snap.exists(), '— data keys:', snap.exists() ? Object.keys(snap.data()) : 'none');
         if (snap.exists()) {
           window.dispatchEvent(new CustomEvent('firebase-data-updated', {
             detail: { data: snap.data() }
@@ -53,9 +50,7 @@ if (!isConfigured) {
   }
 
   async function saveData(uid, data) {
-    console.log('[Firebase] Saving to Firestore...');
     await setDoc(doc(db, 'users', uid, 'data', 'state'), data);
-    console.log('[Firebase] Saved OK');
   }
 
   async function loadData(uid) {
