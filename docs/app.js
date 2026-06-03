@@ -125,7 +125,6 @@ function save() {
 async function pullFromFirestore() {
   if (!window._fb?.user) return;
   try {
-    await window._fb.reconnect(); // force Firestore back online if it drifted offline
     const cloud = await window._fb.loadData(window._fb.user.uid);
     if (cloud && Object.keys(cloud).length) {
       state = cloud;
