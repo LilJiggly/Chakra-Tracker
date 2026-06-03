@@ -2,13 +2,12 @@
 // On GitHub Pages: config injected into window._firebaseConfig by CI/CD
 // Locally:         falls back to ./firebase-config.js
 
-import { initializeApp }                          from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+import { initializeApp }                     from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
 import { getAuth, GoogleAuthProvider,
          signInWithPopup, signOut as fbSignOut,
-         onAuthStateChanged }                     from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-import { initializeFirestore, memoryLocalCache,
-         doc, setDoc, getDoc,
-         onSnapshot }                             from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+         onAuthStateChanged }                from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+import { getFirestore, doc, setDoc, getDoc,
+         onSnapshot }                        from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
 // Try window global first (set by CI/CD), then fall back to local file
 let firebaseConfig = window._firebaseConfig;
@@ -18,28 +17,25 @@ if (!firebaseConfig) {
     const mod = await import('./firebase-config.js');
     firebaseConfig = mod.firebaseConfig;
   } catch {
-    console.warn('No firebase-config.js found — running in offline mode.');
+    console.warn('Firebase: no config found — running in localStorage mode.');
   }
 }
 
 const isConfigured = firebaseConfig?.apiKey && firebaseConfig.apiKey !== 'YOUR_API_KEY';
 
 if (!isConfigured) {
-  console.warn('Firebase: not configured. Using localStorage only.');
   window._fb = null;
   window.dispatchEvent(new CustomEvent('firebase-auth-changed', { detail: { user: null } }));
 } else {
   const app      = initializeApp(firebaseConfig);
   const auth     = getAuth(app);
-  const db       = initializeFirestore(app, {
-    localCache: memoryLocalCache(), // no IndexedDB — avoids stale offline state
-  });
+  const db       = getFirestore(app);
   const provider = new GoogleAuthProvider();
-  let   unsubscribeSnapshot = null;
+  let   unsubscribe = null;
 
   function startListening(uid) {
-    if (unsubscribeSnapshot) unsubscribeSnapshot();
-    unsubscribeSnapshot = onSnapshot(
+    if (unsubscribe) unsubscribe();
+    unsubscribe = onSnapshot(
       doc(db, 'users', uid, 'data', 'state'),
       snap => {
         if (snap.exists()) {
@@ -48,7 +44,7 @@ if (!isConfigured) {
           }));
         }
       },
-      err => console.error('[Firebase] Listener error:', err)
+      err => console.error('Firestore error:', err)
     );
   }
 
@@ -62,19 +58,18 @@ if (!isConfigured) {
   }
 
   window._fb = {
-    signIn:         () => signInWithPopup(auth, provider),
-    signOut:        () => fbSignOut(auth),
+    signIn:   () => signInWithPopup(auth, provider),
+    signOut:  () => fbSignOut(auth),
     saveData,
     loadData,
-    startListening,
-    get user()      { return auth.currentUser; },
+    get user() { return auth.currentUser; },
   };
 
   onAuthStateChanged(auth, user => {
     if (user) {
       startListening(user.uid);
     } else {
-      if (unsubscribeSnapshot) { unsubscribeSnapshot(); unsubscribeSnapshot = null; }
+      if (unsubscribe) { unsubscribe(); unsubscribe = null; }
     }
     window.dispatchEvent(new CustomEvent('firebase-auth-changed', { detail: { user } }));
   });
