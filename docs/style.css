@@ -1131,6 +1131,7 @@ body {
     flex-wrap: wrap;
     justify-content: space-between;
   }
+  .modal-overlay { padding: 0; border: none; border-radius: none; }
   .topbar-score { margin:0;}
   .topbar-score-text { display: none; }
   .topbar-right .subtitle { display: none; }
