@@ -7,7 +7,8 @@ import { getAuth, GoogleAuthProvider,
          signInWithPopup, signOut as fbSignOut,
          onAuthStateChanged }                from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 import { getFirestore, doc, setDoc, getDoc,
-         onSnapshot }                        from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+         onSnapshot,
+         clearIndexedDbPersistence }         from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
 // Try window global first (set by CI/CD), then fall back to local file
 let firebaseConfig = window._firebaseConfig;
@@ -30,6 +31,7 @@ if (!isConfigured) {
   const app      = initializeApp(firebaseConfig);
   const auth     = getAuth(app);
   const db       = getFirestore(app);
+  try { await clearIndexedDbPersistence(db); } catch {} // wipe any corrupted offline state
   const provider = new GoogleAuthProvider();
   let   unsubscribe = null;
 
