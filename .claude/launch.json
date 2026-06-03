@@ -1,0 +1,13 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "chakra",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["start"],
+      "cwd": "/Users/sam/Documents/VsCode/Chakra",
+      "port": 3000,
+      "autoPort": true
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+# Firebase credentials — never commit this
+docs/firebase-config.js
+
+# Dependencies
+node_modules/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Old template files (app lives in /public)
+/css/
+/js/
+/index.html
+/server.js
+/data/
+
+# IDE
+.vscode/

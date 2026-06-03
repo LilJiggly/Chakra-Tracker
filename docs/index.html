@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chakra Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Cinzel:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <!-- Firebase config — replaced by CI/CD, falls back to firebase-config.js locally -->
+  <script>window._firebaseConfig = null;</script>
+</head>
+<body>
+
+  <!-- ── INTRO OVERLAY ── -->
+  <div class="intro-overlay" id="intro-overlay">
+    <div class="intro-content">
+      <div class="intro-logo">
+        <svg viewBox="0 0 60 70" width="56" height="64">
+          <circle cx="30" cy="6"  r="5"   fill="#b5539e"/>
+          <circle cx="30" cy="18" r="4.5" fill="#4b5aa5"/>
+          <circle cx="30" cy="29" r="4"   fill="#5498d0"/>
+          <circle cx="30" cy="40" r="4.5" fill="#3db779"/>
+          <circle cx="30" cy="51" r="4"   fill="#f3ca23"/>
+          <circle cx="30" cy="61" r="3.5" fill="#f4942e"/>
+          <circle cx="30" cy="70" r="3"   fill="#d62b3d"/>
+          <line x1="30" y1="0" x2="30" y2="73" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+        </svg>
+      </div>
+      <h1 class="intro-title">Chakra Tracker</h1>
+      <p class="intro-sub">A daily practice log for your seven energy centres</p>
+
+      <div class="intro-steps">
+        <div class="intro-step">
+          <span class="step-num">1</span>
+          <div>
+            <strong>Pick a chakra</strong>
+            <p>Click any energy point on the diagram or a row on the right to open it.</p>
+          </div>
+        </div>
+        <div class="intro-step">
+          <span class="step-num">2</span>
+          <div>
+            <strong>Complete today's exercises</strong>
+            <p>Check off each exercise you've done. Each one earns XP and fills your progress bar.</p>
+          </div>
+        </div>
+        <div class="intro-step">
+          <span class="step-num">3</span>
+          <div>
+            <strong>Level up over time</strong>
+            <p>Build streaks and rise through 5 levels — Dormant → Awakening → Aligned → Flowing → Radiant.</p>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn-begin" id="btn-begin">Begin Your Practice</button>
+    </div>
+  </div>
+
+  <!-- ── MAIN APP ── -->
+  <!-- ── TOP BAR ── -->
+  <div class="topbar" id="app" style="display:none">
+    <div class="topbar-inner">
+
+      <!-- Logo -->
+      <div class="topbar-logo">
+        <svg viewBox="0 0 20 34" width="14" height="24">
+          <circle cx="10" cy="2"  r="2"   fill="#E040FB"/>
+          <circle cx="10" cy="8"  r="1.8" fill="#3D5AFE"/>
+          <circle cx="10" cy="14" r="1.6" fill="#40C4FF"/>
+          <circle cx="10" cy="20" r="1.8" fill="#00C853"/>
+          <circle cx="10" cy="26" r="1.6" fill="#FFD600"/>
+          <circle cx="10" cy="31" r="1.5" fill="#FF9100"/>
+          <circle cx="10" cy="34" r="1.4" fill="#FF1744"/>
+        </svg>
+        <h1>Chakra Tracker</h1>
+      </div>
+
+      <!-- Centre: global score -->
+      <div class="topbar-score">
+        <svg class="score-ring" viewBox="0 0 36 36">
+          <defs>
+            <linearGradient id="score-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%"   stop-color="#FF1744"/>
+              <stop offset="33%"  stop-color="#FFD600"/>
+              <stop offset="66%"  stop-color="#00C853"/>
+              <stop offset="100%" stop-color="#E040FB"/>
+            </linearGradient>
+          </defs>
+          <circle class="score-ring-bg"   cx="18" cy="18" r="15.9"/>
+          <circle class="score-ring-fill" id="score-ring-fill" cx="18" cy="18" r="15.9"/>
+        </svg>
+        <div class="topbar-score-text">
+          <span class="topbar-score-pct" id="topbar-score-pct">0%</span>
+          <span class="topbar-score-label">balanced</span>
+        </div>
+      </div>
+
+      <!-- Right: auth + controls -->
+      <div class="topbar-right">
+        <p class="subtitle" id="last-updated">No saves yet</p>
+        <div class="auth-area" id="auth-area">
+          <button class="btn-signin" id="btn-signin">Sign in with Google</button>
+        </div>
+        <div class="topbar-divider"></div>
+        <button class="btn-tutorial" id="btn-tutorial" title="How it works">?</button>
+        <button class="btn-debug" id="btn-debug" title="Unlock all chakras">Debug</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── MAIN LAYOUT ── -->
+  <div class="app-body">
+
+    <!-- LEFT PANEL -->
+    <div class="panel-left">
+
+      <!-- Focus card -->
+      <div class="card focus-card" id="focus-card">
+        <div class="focus-glow" id="focus-glow"></div>
+        <div class="focus-dot" id="focus-dot"></div>
+        <div class="focus-info">
+          <h2 id="focus-name">Select a chakra</h2>
+          <p id="focus-sub">Click any point on the diagram to begin.</p>
+          <div class="focus-meta" id="focus-meta" style="display:none">
+            <span class="level-badge" id="focus-level-badge"></span>
+            <span class="focus-streak" id="focus-streak"></span>
+            <span class="focus-xp" id="focus-xp"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- SVG Figure -->
+      <div class="card figure-card">
+        <div class="svg-wrap">
+
+          <!-- The actual chakra SVG -->
+          <svg id="chakra-svg" viewBox="0 0 843.8 961.3" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <style>
+                .st0 { fill: #4b5aa5; }
+                .st1 { fill: #5498d0; }
+                .st2 { fill: #f4942e; }
+                .st3 { fill: #f3ca23; }
+                .st4 { fill: #b5539e; }
+                .st5 { fill: #3db779; }
+                .st6 { fill: #44444d; }
+                .st7 { fill: #d62b3d; }
+              </style>
+            </defs>
+            <!-- Body -->
+            <path class="st6" d="M835.9,680.3c2.1-2.3,3.3-5,2.9-7-.4-2.2-2.7-4.4-4.9-6-24.7-17.1-62.4-.5-89.2-4.2-18-2.5-73.4-51.5-95.4-70.1-3.8-3.2-4.3-6.9-5.3-12.2l-10.5-55.3-6.3-73.4-.9-7c-4.8-36.2-5.4-89.5-29.9-111.6-10.5-9.4-23.7-12.8-36.3-17-9.4,0-18.5-3.3-27.6-6.1-26.9-8.4-49.5-29.3-56.6-58l8.6-27.8c2.1-6.8,3.5-6.1,7.4-9.2,11.4-8.9,14.9-23.8,18.5-36.3l1.7-6c1.4-4.7,1.4-9.4.8-15.5-2.8-1.9-6.2-2.9-8.5-5.7,3.4-17.6,4.3-36.1.3-53.7-2.9-12.5-8.4-24.5-17.1-34-14.3-15.8-33.3-20.8-54-21.9-9.7-.5-19.3-.4-29,.4-9.1.8-19.4,1.7-27.7,5.8-11.6,5.7-21.3,14.4-28.1,25.3-6.8,11-10.5,23.6-11.9,36.4-.7,6.9-.8,13.8-.3,20.6.2,2.1,3.6,20.7,3.1,21l-9.1,5.7c.5,20.9,5.8,40.6,18.9,56.8l7.9,4.2c2.9,11.3,5.2,22,10.7,32.5-6.9,29.3-28.8,50.7-58,59.8l-36,8.9c-40.8,10-48.5,47.1-52.6,88.3l-12,120.8-11.3,59.8c-26.7,24.5-53.9,47.6-84.3,67.6-8.4,5.5-15.9,8.5-26.2,7.5l-41.3-4.2c-21.1-2.1-48.7,6.5-39.3,20.8-7.8,18.3-9.2,38.3-3.7,57.8l16.9,2.9c8.2,1.4,15.3,2.1,23.2,3.4,4.3.7,8.5,5.3,14.4,5.8-1.5,21.9,4.3,42.6,18.5,59.8,9.2,11.1,18.6,22.2,30.2,31.1,25,19.2,53.2,31.3,82.9,41.8-23.4,11.1-33.2,36.2-26.4,59.7,3.3,11.5,13.5,17.5,25.2,15.9,9.6,5.3,17.4,2,26.3-1.9,25.9-11.2,54.4-13.9,83-12.6,33.3,1.5,64-1.5,95.3-13,28.6-10.5,30.2-10.2,58.7.2,30.6,11.2,60.6,14.3,93.2,12.8,28.9-1.3,58.7.9,84.8,12.9,10.2,4.7,15.8,4.6,26.7,2.9,13.3-2,23.8-7,25.9-22.3,3.1-22.1-5.3-44-28.1-54.3l40.4-15.5c3.5-3.4,7.9-5.5,11.9-7.4,22.3-10.3,40.8-25.8,57-45,16-18.8,24.9-40.6,22.2-65.9,6.7,1.3,11-4.5,14.8-5,13.2-1.8,28.3-2.8,39.9-6.8l2.9-12.6.5-5.5c1-13.3-1.2-26.7-7.6-39.2ZM268.9,718.9l-136.3-17.1c22.9-7.2,45.6-10.8,67.3-20.5,23.6-9.4,51.4-25.1,58.1-48.9,12.3-43.6,17.3-87.3,27-133.3,9.6,26,11.5,50.7,14.6,76,5.9,48.8-13,97.6-30.7,143.9ZM574.5,719c-14.7-40.2-34.2-89.3-31.4-131.1l.8-12c1.8-27.5,7-53.6,14.8-81l15.6,86.9,1.8,9.4,7.4,34.1c6.5,29.7,32.8,44.9,60.7,56,21.3,9.8,43.1,12.8,66.6,20.5l-136.3,17.2Z"/>
+            <!-- Chakra shapes -->
+            <circle class="st7" cx="423.7" cy="853.7" r="33.7"/>
+            <path  class="st0" d="M391.6,158.9c2.7-8,12.6-16.2,20-18.8,17-6.1,32.9,0,41.5,13.7,8.8,14.2,7.3,31.6-5.6,43.9-10.8,10.4-28,13.3-42.1,4.3-13.4-8.5-20.4-24-13.8-43.1Z"/>
+            <path  class="st1" d="M456.3,299.3c6.5,19-6.4,38.4-24.7,42.9s-37.6-6.2-41.1-25.7c-3.4-19.1,6.2-35,24.1-40.5,15.7-4.8,35.3,4.8,41.6,23.3Z"/>
+            <circle class="st3" cx="423.7" cy="584.6" r="33.5"/>
+            <path  class="st5" d="M419.2,480.6c-16.9-2-27.3-15.1-28.8-29-1.7-15.7,7.1-30.7,22.7-35.6,13.1-4.1,27.6,0,35.8,9.3,9,10.2,11,25.2,5.3,36.6-6.3,12.6-18.9,20.6-35,18.7Z"/>
+            <path  class="st2" d="M412.6,691.5c18.4-6.6,37,4.1,43,21.1,6,16.8-3.7,35.3-21.2,42-16.2,6.2-35.2-2.6-41.5-18.6-6.9-17.6.1-37.6,19.7-44.6Z"/>
+            <path  class="st4" d="M456.8,43.7c-4.2,14.9-18.4,26.3-34.6,25.3-12.1-.8-24.6-8.8-30-19.2-1.7-3.3-1.6-7.1-5.7-6.6,4.6-1.5,3.7-7,3.8-11.8.3-18.7,17.2-32.2,34.6-31.2,17.5,1,31.6,14.2,33.4,33.8,0,0-.1,4-1.5,9.9Z"/>
+
+            <!-- Invisible hit areas (clickable) -->
+            <circle class="chakra-hit" data-id="crown"     cx="422" cy="35"  r="48"/>
+            <circle class="chakra-hit" data-id="third-eye" cx="422" cy="170" r="44"/>
+            <circle class="chakra-hit" data-id="throat"    cx="422" cy="308" r="42"/>
+            <circle class="chakra-hit" data-id="heart"     cx="420" cy="448" r="44"/>
+            <circle class="chakra-hit" data-id="solar"     cx="423" cy="584" r="46"/>
+            <circle class="chakra-hit" data-id="sacral"    cx="422" cy="713" r="42"/>
+            <circle class="chakra-hit" data-id="root"      cx="423" cy="853" r="46"/>
+
+            <!-- Pulse rings (shown on focused chakra) -->
+            <circle class="chakra-pulse" id="pulse-crown"     cx="422" cy="35"  r="48" style="display:none"/>
+            <circle class="chakra-pulse" id="pulse-third-eye" cx="422" cy="170" r="44" style="display:none"/>
+            <circle class="chakra-pulse" id="pulse-throat"    cx="422" cy="308" r="42" style="display:none"/>
+            <circle class="chakra-pulse" id="pulse-heart"     cx="420" cy="448" r="44" style="display:none"/>
+            <circle class="chakra-pulse" id="pulse-solar"     cx="423" cy="584" r="46" style="display:none"/>
+            <circle class="chakra-pulse" id="pulse-sacral"    cx="422" cy="713" r="42" style="display:none"/>
+            <circle class="chakra-pulse" id="pulse-root"      cx="423" cy="853" r="46" style="display:none"/>
+          </svg>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div class="panel-right">
+
+      <div class="tab-bar">
+        <button class="tab-btn active" data-tab="chakras">Chakras</button>
+        <button class="tab-btn" data-tab="calendar">Calendar</button>
+        <button class="tab-btn" data-tab="progress">Progress</button>
+      </div>
+
+      <!-- Tab: Chakra list -->
+      <div class="tab-panel" id="tab-chakras">
+        <div id="chakra-list"></div>
+      </div>
+
+      <!-- Tab: Calendar -->
+      <div class="tab-panel hidden" id="tab-calendar">
+        <div class="cal-header">
+          <button class="cal-nav" id="cal-prev">‹</button>
+          <span class="cal-month-label" id="cal-month-label"></span>
+          <button class="cal-nav" id="cal-next">›</button>
+        </div>
+        <div class="cal-legend" id="cal-legend"></div>
+        <div class="cal-weekdays">
+          <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+        </div>
+        <div class="cal-grid" id="cal-grid"></div>
+        <div class="cal-day-detail card" id="cal-day-detail" style="display:none"></div>
+      </div>
+
+      <!-- Tab: Progress charts -->
+      <div class="tab-panel hidden" id="tab-progress">
+        <div class="charts-grid">
+          <div class="chart-card">
+            <h4>Current Balance</h4>
+            <p class="chart-sub">Your 7 chakras right now</p>
+            <div class="chart-wrap"><canvas id="chart-radar"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <h4>14-Day Activity</h4>
+            <p class="chart-sub">Chakras practiced per day</p>
+            <div class="chart-wrap"><canvas id="chart-activity"></canvas></div>
+          </div>
+          <div class="chart-card chart-card-full">
+            <h4>Progress Overview</h4>
+            <p class="chart-sub">All chakras ranked</p>
+            <div class="chart-wrap-tall"><canvas id="chart-bars"></canvas></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div><!-- end app-body -->
+
+  <!-- ── DETAIL MODAL ── -->
+  <div class="modal-overlay" id="modal-overlay">
+    <div class="modal">
+      <button class="modal-close" id="modal-close">✕</button>
+
+      <!-- Header -->
+      <div class="modal-header">
+        <div class="modal-swatch" id="modal-swatch"></div>
+        <div class="modal-header-text">
+          <h3 id="modal-title"></h3>
+          <span class="modal-sanskrit" id="modal-sanskrit"></span>
+          <span class="modal-element"  id="modal-element"></span>
+        </div>
+        <div class="modal-streak-badge" id="modal-streak-badge"></div>
+      </div>
+
+      <!-- Level + progress -->
+      <div class="modal-level-section">
+        <div class="modal-level-row">
+          <span class="level-badge lg" id="modal-level-badge"></span>
+          <span class="modal-level-name" id="modal-level-name"></span>
+          <span class="modal-pct" id="modal-pct"></span>
+        </div>
+        <div class="xp-bar-wrap">
+          <div class="xp-bar" id="modal-xp-bar"></div>
+          <div class="xp-bar-gain" id="modal-xp-bar-gain"></div>
+          <!-- tick marks at each level boundary -->
+          <div class="xp-tick" style="left:20%"></div>
+          <div class="xp-tick" style="left:40%"></div>
+          <div class="xp-tick" style="left:60%"></div>
+          <div class="xp-tick" style="left:80%"></div>
+        </div>
+        <div class="xp-milestones">
+          <span>0%</span>
+          <span style="left:20%">L2</span>
+          <span style="left:40%">L3</span>
+          <span style="left:60%">L4</span>
+          <span style="left:80%">L5</span>
+          <span>100%</span>
+        </div>
+        <div class="xp-today-row" id="xp-today-earned"></div>
+      </div>
+
+      <!-- Affirmation -->
+      <div class="affirmation-card" id="modal-affirmation"></div>
+
+      <!-- Today's exercises -->
+      <div class="exercises-section">
+        <div class="exercises-header">
+          <h4>Today's Practice</h4>
+          <span class="today-date" id="today-date"></span>
+        </div>
+        <div id="exercises-list" class="exercises-list"></div>
+        <div class="all-done-banner" id="all-done-banner" style="display:none">
+          <span>✦ All exercises complete for today!</span>
+        </div>
+      </div>
+
+      <!-- About (collapsed) -->
+      <details class="about-section">
+        <summary>About this chakra</summary>
+        <p class="modal-summary" id="modal-summary"></p>
+        <div class="modal-signs">
+          <div class="sign blocked"><strong>When blocked</strong><p id="sign-blocked"></p></div>
+          <div class="sign open"><strong>When open</strong><p id="sign-open"></p></div>
+        </div>
+      </details>
+
+    </div>
+  </div>
+
+  <!-- ── LOCKED TOOLTIP ── -->
+  <div class="locked-tooltip" id="locked-tooltip" style="display:none">
+    <div class="locked-tooltip-inner">
+      <span class="locked-tooltip-icon">🔒</span>
+      <div>
+        <strong id="locked-tooltip-title"></strong>
+        <p id="locked-tooltip-body"></p>
+      </div>
+      <button class="locked-tooltip-close" id="locked-tooltip-close">✕</button>
+    </div>
+  </div>
+
+  <!-- ── LEVEL UP TOAST ── -->
+  <div class="levelup-toast" id="levelup-toast" style="display:none">
+    <div class="levelup-inner">
+      <span class="levelup-icon">✦</span>
+      <div>
+        <strong id="toast-title">Level Up!</strong>
+        <p id="toast-body"></p>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="chakra-data.js"></script>
+  <script src="app.js"></script>
+  <!-- Firebase — loads after app.js, fires 'firebase-ready' when auth is set up -->
+  <script type="module" src="firebase.js"></script>
+</body>
+</html>
