@@ -6,7 +6,7 @@ import { initializeApp }                          from 'https://www.gstatic.com/
 import { getAuth, GoogleAuthProvider,
          signInWithPopup, signOut as fbSignOut,
          onAuthStateChanged }                     from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-import { initializeFirestore, doc, setDoc, getDoc,
+import { getFirestore, doc, setDoc, getDoc,
          onSnapshot }                             from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
 // Try window global first (set by CI/CD), then fall back to local file
@@ -30,9 +30,7 @@ if (!isConfigured) {
 } else {
   const app      = initializeApp(firebaseConfig);
   const auth     = getAuth(app);
-  const db       = initializeFirestore(app, {
-    experimentalForceLongPolling: true, // use HTTP polling — more reliable than WebSocket
-  });
+  const db       = getFirestore(app);
   const provider = new GoogleAuthProvider();
   let   unsubscribeSnapshot = null;
 
