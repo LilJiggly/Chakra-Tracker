@@ -121,6 +121,19 @@ function save() {
   }
 }
 
+// ── Cross-tab sync (same browser, instant via localStorage event) ──
+window.addEventListener('storage', e => {
+  if (e.key !== 'chakra-v3' || !e.newValue) return;
+  try {
+    state = JSON.parse(e.newValue);
+    renderList();
+    updateScoreRing();
+    document.getElementById('last-updated').textContent =
+      'Synced ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    if (document.getElementById('modal-overlay').classList.contains('open')) renderModal();
+  } catch {}
+});
+
 // ── Firebase auth integration ─────────────────────────────────
 window.addEventListener('firebase-auth-changed', e => {
   updateAuthUI(e.detail.user);
