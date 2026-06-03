@@ -121,6 +121,30 @@ function save() {
   }
 }
 
+// ── Pull latest from Firestore ───────────────────────────────
+async function pullFromFirestore() {
+  if (!window._fb?.user) return;
+  try {
+    const cloud = await window._fb.loadData(window._fb.user.uid);
+    if (cloud && Object.keys(cloud).length) {
+      state = cloud;
+      localStorage.setItem('chakra-v3', JSON.stringify(state));
+      renderList();
+      updateScoreRing();
+      document.getElementById('last-updated').textContent =
+        'Synced ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+  } catch(e) { console.warn('Pull failed:', e); }
+}
+
+// Re-sync when tab becomes visible (e.g. switching from phone to desktop)
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') pullFromFirestore();
+});
+
+// Re-sync when network comes back online
+window.addEventListener('online', () => pullFromFirestore());
+
 // ── Cross-tab sync (same browser, instant via localStorage event) ──
 window.addEventListener('storage', e => {
   if (e.key !== 'chakra-v3' || !e.newValue) return;

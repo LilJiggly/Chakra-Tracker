@@ -6,7 +6,7 @@ import { initializeApp }                          from 'https://www.gstatic.com/
 import { getAuth, GoogleAuthProvider,
          signInWithPopup, signOut as fbSignOut,
          onAuthStateChanged }                     from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-import { getFirestore, doc, setDoc,
+import { getFirestore, doc, setDoc, getDoc,
          onSnapshot }                             from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
 // Try window global first (set by CI/CD), then fall back to local file
@@ -58,10 +58,16 @@ if (!isConfigured) {
     console.log('[Firebase] Saved OK');
   }
 
+  async function loadData(uid) {
+    const snap = await getDoc(doc(db, 'users', uid, 'data', 'state'));
+    return snap.exists() ? snap.data() : null;
+  }
+
   window._fb = {
     signIn:         () => signInWithPopup(auth, provider),
     signOut:        () => fbSignOut(auth),
     saveData,
+    loadData,
     startListening,
     get user()      { return auth.currentUser; },
   };
