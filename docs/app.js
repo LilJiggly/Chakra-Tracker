@@ -378,8 +378,8 @@ function focusChakra(id) {
   const lvl = getLevelInfo(pct);
   const todayXP = calcXP(ch.doneToday.length, c.exercises.length);
 
-  document.querySelector('.panel-left').style.background =
-    `linear-gradient(180deg, ${c.color}0d 0%, var(--card) 100%)`;
+  // document.querySelector('.panel-left').style.background =
+  //   `linear-gradient(180deg, ${c.color}0d 0%, var(--card) 100%)`;
   document.getElementById('focus-dot').style.background  = c.color;
   document.getElementById('focus-dot').style.boxShadow   = `0 0 18px 5px ${c.color}88`;
   document.getElementById('focus-glow').style.background =
@@ -783,18 +783,17 @@ function renderRadarChart() {
   const ctx = document.getElementById('chart-radar').getContext('2d');
   if (chartInstances.radar) chartInstances.radar.destroy();
 
-  const unlocked = CHAKRA_DATA.filter(c => isUnlocked(c.id));
-
+  // Always show all 7 — locked chakras show as 0 and dimmed
   chartInstances.radar = new Chart(ctx, {
     type: 'radar',
     data: {
-      labels: unlocked.map(c => c.name),
+      labels: CHAKRA_DATA.map(c => c.name),
       datasets: [{
-        data:            unlocked.map(c => getChakra(c.id).progress),
+        data:            CHAKRA_DATA.map(c => isUnlocked(c.id) ? getChakra(c.id).progress : 0),
         backgroundColor: 'rgba(139,92,246,0.15)',
         borderColor:     'rgba(139,92,246,0.8)',
         borderWidth:     2,
-        pointBackgroundColor: unlocked.map(c => c.color),
+        pointBackgroundColor: CHAKRA_DATA.map(c => isUnlocked(c.id) ? c.color : 'rgba(255,255,255,0.15)'),
         pointBorderColor:     '#fff',
         pointRadius:     5,
         pointHoverRadius: 7,
